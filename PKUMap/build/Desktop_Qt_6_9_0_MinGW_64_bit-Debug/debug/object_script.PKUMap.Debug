@@ -1,0 +1,12 @@
+debug/clickablerectitem.o
+debug/detailwindow.o
+debug/main.o
+debug/mainwindow.o
+debug/map.o
+debug/signup.o
+debug/qrc_images.o
+debug/moc_clickablerectitem.o
+debug/moc_detailwindow.o
+debug/moc_mainwindow.o
+debug/moc_map.o
+debug/moc_signup.o

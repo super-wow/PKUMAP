@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>recource_image/west.jpg</file>
+        <file>recource_image/tower.jpg</file>
+        <file>recource_image/map.png</file>
+    </qresource>
+</RCC>

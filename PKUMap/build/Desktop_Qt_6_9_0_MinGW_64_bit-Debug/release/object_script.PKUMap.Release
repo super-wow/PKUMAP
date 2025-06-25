@@ -1,0 +1,12 @@
+release/clickablerectitem.o
+release/detailwindow.o
+release/main.o
+release/mainwindow.o
+release/map.o
+release/signup.o
+release/qrc_images.o
+release/moc_clickablerectitem.o
+release/moc_detailwindow.o
+release/moc_mainwindow.o
+release/moc_map.o
+release/moc_signup.o
