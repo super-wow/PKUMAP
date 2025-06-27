@@ -156,6 +156,8 @@ Map::Map(QWidget *parent) : QWidget(parent) {
             "常有师生在此写生，感受自然与人文交融。"
             "四季景色变幻多姿，尤以春日景致最负盛名。"
             "既是休憩胜地，更是中国传统园林文化课堂。",QPoint(610,150));
+
+    addRoute();
 }
 
 void Map::loadMap() {
@@ -169,6 +171,76 @@ void Map::loadMap() {
     m_scene->setSceneRect(m_mapPixmap.rect());
 }
 
+
+
+void Map::addRoute() {
+    for(int j=1;j<=2;++j){
+        if(j==1){
+            QList<QPointF> routePoints;
+            routePoints << QPointF(420, 290) << QPointF(510, 280) << QPointF(520, 360) << QPointF(640,390) << QPointF(700,380) << QPointF(765, 355) << QPointF(760, 340) << QPointF(750, 230) << QPointF(650, 245) << QPointF(640,270) << QPointF(510, 280);
+
+            QPainterPath path;
+            path.moveTo(routePoints[0]);
+            for (int i = 1; i < routePoints.size(); ++i) {
+                QPointF ctrl1 = routePoints[i-1] + (routePoints[i] - routePoints[i-1]) * 0.3;
+                QPointF ctrl2 = routePoints[i-1] + (routePoints[i] - routePoints[i-1]) * 0.7;
+                path.cubicTo(ctrl1, ctrl2, routePoints[i]);
+            }
+
+            auto *routeItem = new ClickablePathItem("绕未名湖漫步一周，尽览北大最精华的景致。"
+                                                    "从湖东岸出发，博雅塔影最先映入游人眼帘。"
+                                                    "北岸石舫静静停泊，诉说百年学府的沧桑历史。"
+                                                    "西侧翻尾石鱼跃水，是毕业生必拍的纪念景点。"
+                                                    "南岸垂柳依依，春日嫩绿枝条轻拂湖面。"
+                                                    "湖心岛树木葱郁，常有白鹭栖息增添生机。"
+                                                    "环湖小径平整舒适，适合晨跑或悠闲散步。"
+                                                    "四季景色各异，晨昏光影变幻美不胜收。");
+            routeItem->setPath(path);
+            routeItem->setData(0, QVariant::fromValue(path)); // 存储原始路径
+
+
+            m_scene->addItem(routeItem);
+            m_routeItems.append(routeItem);
+
+            connect(routeItem, &ClickablePathItem::clicked, this, &Map::handleRouteClick);
+        }
+        else{
+            QList<QPointF> routePoints;
+            routePoints << QPointF(750, 810) << QPointF(750, 430) << QPointF(580, 430) << QPointF(580,610) << QPointF(570,670) <<QPointF(750,670);
+
+            QPainterPath path;
+            path.moveTo(routePoints[0]);
+            for (int i = 1; i < routePoints.size(); ++i) {
+                QPointF ctrl1 = routePoints[i-1] + (routePoints[i] - routePoints[i-1]) * 0.3;
+                QPointF ctrl2 = routePoints[i-1] + (routePoints[i] - routePoints[i-1]) * 0.7;
+                path.cubicTo(ctrl1, ctrl2, routePoints[i]);
+            }
+
+            auto *routeItem = new ClickablePathItem("燕南园坐落北大校园南部，青砖灰瓦庭院深深，"
+                                                    "曾居冯友兰等学术大师，承载厚重人文历史。"
+                                                    "园内古树参天环境清幽，适合静心治学研究。"
+                                                    "保留完整四合院格局，展现民国建筑特色。"
+                                                    "常有访客追寻大师足迹，感受学术文脉传承。"
+                                                    "北大图书馆矗立校园中心，藏书浩瀚逾千万册。"
+                                                    "李大钊曾任馆长，见证新文化运动重要历程。"
+                                                    "古籍善本珍藏丰富，四库全书等瑰宝荟萃。"
+                                                    "现代化设施完善，智能服务提升研究体验。"
+                                                    "昼夜不息的求知灯火，照亮无数学术梦想。");
+            routeItem->setPath(path);
+            routeItem->setData(0, QVariant::fromValue(path)); // 存储原始路径
+
+
+            m_scene->addItem(routeItem);
+            m_routeItems.append(routeItem);
+
+            connect(routeItem, &ClickablePathItem::clicked, this, &Map::handleRouteClick);
+        }
+    }
+
+}
+
+
+
 void Map::addSpot(const QString &name, const QPointF &scenePos) {
     auto *spot = new ClickableRectItem(name);
     spot->setRect(0, 0, 30, 20);
@@ -180,6 +252,31 @@ void Map::addSpot(const QString &name, const QPointF &scenePos) {
     // 连接
     connect(spot, &ClickableRectItem::clicked,
             this, &Map::handleSpotClick);
+}
+
+
+void Map::updateRoutePositions() {
+    if (!m_mapItem || m_routeItems.isEmpty()) return;
+
+    qreal mapScale = m_mapItem->scale();
+    QTransform mapTransform = m_mapItem->transform();
+
+    for (auto *route : m_routeItems) {
+        // 保存原始路径数据
+        if (route->data(0).isNull()) {
+            route->setData(0, QVariant::fromValue(route->path()));
+        }
+
+        // 获取原始路径
+        QPainterPath originalPath = route->data(0).value<QPainterPath>();
+        QPainterPath transformedPath;
+
+        // 对整个路径应用变换（保持贝塞尔曲线结构）
+        transformedPath = mapTransform.map(originalPath);
+
+        route->setPath(transformedPath);
+        // 不需要单独设置scale，因为变换已包含在mapTransform中
+    }
 }
 
 void Map::updateSpotPositions() {
@@ -235,6 +332,7 @@ void Map::resizeEvent(QResizeEvent *event) {
     m_mapItem->setTransform(QTransform::fromScale(scale, scale));
     m_view->setSceneRect(m_mapItem->boundingRect());
     updateSpotPositions();
+    updateRoutePositions();
 }
 
 void Map::handleSpotClick(const QString &spotName) {
@@ -251,5 +349,12 @@ void Map::handleSpotClick(const QString &spotName) {
     int y = (screenGeometry.height() - detailWin->height()) / 2;
     detailWin->move(x, y);
 
+    detailWin->show();
+}
+
+void Map::handleRouteClick(const QString &routeName) {
+    DetailWindow *detailWin = new DetailWindow(routeName);
+    detailWin->setAttribute(Qt::WA_DeleteOnClose);
+    detailWin->setWindowModality(Qt::ApplicationModal);
     detailWin->show();
 }

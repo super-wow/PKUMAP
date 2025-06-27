@@ -5,6 +5,7 @@
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include "clickablerectitem.h"
+#include "clickablepathitem.h"
 #include "detailwindow.h"
 #include <QScreen>
 #include <QApplication>
@@ -23,12 +24,16 @@ private:
     QGraphicsPixmapItem *m_mapItem;
     QPixmap m_mapPixmap;
     QVector<ClickableRectItem*> m_spotItems;  // 存储所有景点项
+    QList<ClickablePathItem*> m_routeItems;
 
     void loadMap();
+    void addRoute();
     void addSpot(const QString &name, const QPointF &scenePos);
     void updateSpotPositions();  // 更新景点位置
+    void updateRoutePositions();
 private slots:
     void handleSpotClick(const QString &spotName);
+    void handleRouteClick(const QString &routeName);
 };
 
 #endif // MAP_H
