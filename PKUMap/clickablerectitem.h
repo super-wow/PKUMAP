@@ -17,6 +17,7 @@ public:
     // 构造函数：参数为景点名称和父项
     explicit ClickableRectItem(const QString &name, QGraphicsItem *parent = nullptr);
 
+    QString name() const { return m_name.left(7); }
     // 重写鼠标事件函数
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     void hoverEnterEvent(QGraphicsSceneHoverEvent *event) override;

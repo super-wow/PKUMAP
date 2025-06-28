@@ -9,6 +9,9 @@
 #include "detailwindow.h"
 #include <QScreen>
 #include <QApplication>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QGraphicsRectItem>
 
 class Map : public QWidget {
     Q_OBJECT
@@ -25,6 +28,14 @@ private:
     QPixmap m_mapPixmap;
     QVector<ClickableRectItem*> m_spotItems;  // 存储所有景点项
     QList<ClickablePathItem*> m_routeItems;
+
+    QLineEdit *searchEdit;
+    QPushButton *searchButton;
+    QGraphicsRectItem *searchResultMarker; // 用于显示绿色框
+
+    void setupSearchUI();
+    void performSearch();
+    void showSearchResult(const QPointF &position);
 
     void loadMap();
     void addRoute();

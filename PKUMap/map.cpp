@@ -1,6 +1,8 @@
 #include "map.h"
 #include <QVBoxLayout>
 #include <QDebug>
+#include <QMessageBox>
+#include <QTimer>
 
 Map::Map(QWidget *parent) : QWidget(parent) {
     // 初始化场景和视图
@@ -11,11 +13,17 @@ Map::Map(QWidget *parent) : QWidget(parent) {
     m_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    // 设置布局
-    QVBoxLayout *layout = new QVBoxLayout(this);
-    layout->addWidget(m_view);
-    layout->setContentsMargins(0, 0, 0, 0);
-    setLayout(layout);
+
+    setupSearchUI();
+
+    // 初始化搜索结果标记
+    searchResultMarker = new QGraphicsRectItem();
+    searchResultMarker->setRect(0, 0, 40, 40);
+    searchResultMarker->setPen(QPen(Qt::green, 3));
+    searchResultMarker->setBrush(Qt::NoBrush);
+    searchResultMarker->setZValue(10); // 确保在最上层
+    searchResultMarker->hide(); // 初始隐藏
+    m_scene->addItem(searchResultMarker);
 
     // 加载地图
     loadMap();
@@ -93,7 +101,7 @@ Map::Map(QWidget *parent) : QWidget(parent) {
             "建筑细节精雕细琢，体现中国传统建筑艺术精髓。"
             "夜幕下华灯初上，更显古朴大气的独特韵味。"
             "既是校园地理坐标，更是北大精神的文化象征。",QPoint(420,290));
-    addSpot("北大革命烈士纪念馆庄严肃穆，坐落于燕园之内。"
+    addSpot("革命烈士纪念馆庄严肃穆，坐落于燕园之内。"
             "馆内陈列着为革命献身的北大英烈事迹与文物。"
             "真实记录五四运动以来师生爱国奋斗的光辉历程。"
             "通过历史照片、文献资料展现先烈崇高革命精神。"
@@ -177,7 +185,7 @@ void Map::addRoute() {
     for(int j=1;j<=2;++j){
         if(j==1){
             QList<QPointF> routePoints;
-            routePoints << QPointF(420, 290) << QPointF(510, 280) << QPointF(520, 360) << QPointF(640,390) << QPointF(700,380) << QPointF(765, 355) << QPointF(760, 340) << QPointF(750, 230) << QPointF(650, 245) << QPointF(640,270) << QPointF(510, 280);
+            routePoints << QPointF(420, 290) << QPointF(510, 280) << QPointF(520, 360) << QPointF(580, 385) << QPointF(640,390) << QPointF(700,380) << QPointF(767, 360) << QPointF(760, 340) << QPointF(750, 235) << QPointF(650, 245) << QPointF(640,270) << QPointF(510, 280);
 
             QPainterPath path;
             path.moveTo(routePoints[0]);
@@ -206,7 +214,7 @@ void Map::addRoute() {
         }
         else{
             QList<QPointF> routePoints;
-            routePoints << QPointF(750, 810) << QPointF(750, 430) << QPointF(580, 430) << QPointF(580,610) << QPointF(570,670) <<QPointF(750,670);
+            routePoints << QPointF(750, 810) << QPointF(750, 430) << QPointF(580, 430) << QPointF(580,560) << QPoint(575,570) << QPointF(570,660) <<QPointF(750,660);
 
             QPainterPath path;
             path.moveTo(routePoints[0]);
@@ -236,6 +244,7 @@ void Map::addRoute() {
             connect(routeItem, &ClickablePathItem::clicked, this, &Map::handleRouteClick);
         }
     }
+
 
 }
 
@@ -299,6 +308,66 @@ void Map::updateSpotPositions() {
     }
 }
 
+
+void Map::setupSearchUI() {
+    // 创建搜索控件
+    QWidget *searchPanel = new QWidget(this);
+    searchPanel->setFixedWidth(200);
+
+    searchEdit = new QLineEdit(searchPanel);
+    searchButton = new QPushButton("搜索", searchPanel);
+
+    QVBoxLayout *panelLayout = new QVBoxLayout(searchPanel);
+    panelLayout->addWidget(new QLabel("搜索景点:"));
+    panelLayout->addWidget(searchEdit);
+    panelLayout->addWidget(searchButton);
+    panelLayout->addStretch();
+
+    // 主布局
+    QHBoxLayout *mainLayout = new QHBoxLayout(this);
+    mainLayout->addWidget(m_view, 1); // 地图占主要空间
+    mainLayout->addWidget(searchPanel); // 搜索面板在右侧
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+
+    // 连接信号
+    connect(searchButton, &QPushButton::clicked, this, &Map::performSearch);
+    connect(searchEdit, &QLineEdit::returnPressed, this, &Map::performSearch);
+}
+
+void Map::performSearch() {
+    QString keyword = searchEdit->text().trimmed();
+    if (keyword.isEmpty()) return;
+
+    // 搜索景点
+    for (auto *spot : m_spotItems) {
+        if (spot->name().contains(keyword, Qt::CaseInsensitive)) {
+            showSearchResult(spot->pos());
+            return;
+        }
+    }
+
+
+
+    // 未找到结果
+    searchResultMarker->hide();
+    QMessageBox::information(this, "提示", "未找到匹配的景点");
+}
+
+void Map::showSearchResult(const QPointF &position) {
+    // 显示绿色框
+    searchResultMarker->setRect(position.x() - 20, position.y() - 20, 40, 40);
+    searchResultMarker->show();
+
+    // 居中显示结果
+    m_view->centerOn(position);
+
+    // 5秒后自动隐藏
+    QTimer::singleShot(5000, [this]() {
+        searchResultMarker->hide();
+    });
+}
+
+
 void Map::resizeEvent(QResizeEvent *event) {
     QWidget::resizeEvent(event);
 
@@ -328,6 +397,9 @@ void Map::resizeEvent(QResizeEvent *event) {
         m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     }
 
+    if (searchEdit && searchEdit->parentWidget()) {
+        searchEdit->parentWidget()->setFixedWidth(200);
+    }
     // 应用变换
     m_mapItem->setTransform(QTransform::fromScale(scale, scale));
     m_view->setSceneRect(m_mapItem->boundingRect());
